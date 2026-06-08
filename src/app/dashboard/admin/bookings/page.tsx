@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Table from '@/components/ui/Table'
 import { Calendar, Clock } from 'lucide-react'
+import { formatDate, formatTime } from '@/lib/utils'
 
 interface Booking {
   _id: string
@@ -29,6 +30,7 @@ export default function AdminBookings() {
     fetch('/api/admin/bookings')
       .then(r => r.json())
       .then(data => { setBookings(data); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
 
   if (loading) {
@@ -54,8 +56,8 @@ export default function AdminBookings() {
       sortable: true,
       render: (b: Booking) => (
         <div className="flex items-center gap-3 text-xs">
-          <span className="flex items-center gap-1"><Calendar size={12} />{new Date(b.dateTime).toLocaleDateString()}</span>
-          <span className="flex items-center gap-1"><Clock size={12} />{new Date(b.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          <span className="flex items-center gap-1"><Calendar size={12} />{formatDate(b.dateTime)}</span>
+          <span className="flex items-center gap-1"><Clock size={12} />{formatTime(b.dateTime)}</span>
         </div>
       ),
     },
@@ -73,7 +75,7 @@ export default function AdminBookings() {
       key: 'createdAt',
       label: 'Requested',
       sortable: true,
-      render: (b: Booking) => new Date(b.createdAt).toLocaleDateString(),
+      render: (b: Booking) => formatDate(b.createdAt),
     },
   ]
 

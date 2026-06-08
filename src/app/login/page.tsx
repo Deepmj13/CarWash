@@ -9,14 +9,24 @@ import Link from 'next/link'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    await signIn('credentials', {
+    setError('')
+    setSubmitting(true)
+    const result = await signIn('credentials', {
       email,
       password,
-      callbackUrl: '/',
+      redirect: false,
     })
+    setSubmitting(false)
+    if (result?.error) {
+      setError('Invalid email or password')
+    } else if (result?.ok) {
+      window.location.href = '/'
+    }
   }
 
   return (
@@ -49,7 +59,7 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-s font-bold uppercase tracking-widest text-gray-500">Password</label>
+            <label className="text-xs font-bold uppercase tracking-widest text-gray-500">Password</label>
             <input 
               type="password" 
               value={password}
@@ -60,8 +70,12 @@ export default function LoginPage() {
             />
           </div>
 
-          <Button type="submit" size="lg" className="w-full py-4">
-            Login Now
+          {error && (
+            <p className="text-red-400 text-sm font-medium text-center">{error}</p>
+          )}
+
+          <Button type="submit" size="lg" className="w-full py-4" disabled={submitting}>
+            {submitting ? 'Signing in...' : 'Login Now'}
           </Button>
         </form>
 

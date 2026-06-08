@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import bcrypt from "bcryptjs"
 import { connectDB } from "@/lib/db"
 import User from "@/models/User"
+import { rateLimit } from "@/lib/rate-limit"
 
 export const authOptions = {
   session: {
@@ -21,11 +22,12 @@ export const authOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null
 
+        if (!rateLimit(`login:${credentials.email}`, 10, 900_000)) return null
+
         await connectDB()
         const user = await User.findOne({ email: credentials.email })
 
-        if (!user) return null
-        if (user.isBlocked) return null
+        if (!user || user.isBlocked) return null
 
         const isValid = await bcrypt.compare(credentials.password, user.password || "")
         if (!isValid) return null
@@ -40,16 +42,16 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }: any) {
+    async jwt({ token, user }: { token: any; user?: any }) {
       if (user) {
         token.role = user.role
       }
       return token
     },
-    async session({ session, token }: any) {
+    async session({ session, token }: { session: any; token: any }) {
       if (session.user) {
-        (session.user as any).role = token.role
-        ;(session.user as any).id = token.sub
+        session.user.role = token.role
+        session.user.id = token.sub
       }
       return session
     },

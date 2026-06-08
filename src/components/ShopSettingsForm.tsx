@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Save } from 'lucide-react'
+import { useToast } from '@/components/Toast'
 
 const currencies = ['USD', 'EUR', 'GBP', 'INR', 'CAD', 'AUD']
 
@@ -15,6 +16,7 @@ interface ShopData {
   minPrice?: number
   maxPrice?: number
   currency?: string
+  operatingHours?: string
 }
 
 export default function ShopSettingsForm({ shop }: { shop: ShopData | null }) {
@@ -26,8 +28,10 @@ export default function ShopSettingsForm({ shop }: { shop: ShopData | null }) {
     minPrice: shop?.minPrice ?? 0,
     maxPrice: shop?.maxPrice ?? 0,
     currency: shop?.currency || 'USD',
+    operatingHours: shop?.operatingHours || '',
   })
   const router = useRouter()
+  const { toast } = useToast()
   const isCreating = !shop
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,18 +42,18 @@ export default function ShopSettingsForm({ shop }: { shop: ShopData | null }) {
       const method = isCreating ? 'POST' : 'PATCH'
       const res = await fetch(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': '1' },
         body: JSON.stringify(formData)
       })
       if (res.ok) {
-        alert(isCreating ? 'Shop created successfully!' : 'Shop details updated!')
+        toast(isCreating ? 'Shop created successfully!' : 'Shop details updated!', 'success')
         router.push('/dashboard/owner')
       } else {
         const data = await res.json()
-        alert(data.error || 'Operation failed')
+        toast(data.error || 'Operation failed', 'error')
       }
     } catch {
-      alert('An unexpected error occurred')
+      toast('An unexpected error occurred', 'error')
     } finally {
       setLoading(false)
     }
@@ -107,6 +111,17 @@ export default function ShopSettingsForm({ shop }: { shop: ShopData | null }) {
             required
           />
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-xs font-bold uppercase tracking-widest text-gray-500">Operating Hours</label>
+        <input
+          type="text"
+          value={formData.operatingHours}
+          onChange={(e) => setFormData({...formData, operatingHours: e.target.value})}
+          placeholder="e.g. Mon–Fri 9 AM–6 PM, Sat 10 AM–4 PM"
+          className="w-full bg-dark-bg border-2 border-gray-800 px-4 py-3 outline-none focus:border-primary transition-colors"
+        />
       </div>
 
       <div className="space-y-2">

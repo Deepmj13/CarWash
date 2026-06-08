@@ -5,6 +5,8 @@ import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { LayoutDashboard, Calendar, TrendingUp, Clock } from 'lucide-react'
+import { formatDate, formatTime } from '@/lib/utils'
+import { useToast } from '@/components/Toast'
 
 interface Stat {
   label: string
@@ -20,6 +22,7 @@ interface Booking {
   shopId: string
   dateTime: string
   status: string
+  serviceId?: { name: string; price: number; duration: number }
 }
 
 interface Shop {
@@ -30,14 +33,26 @@ interface Shop {
 }
 
 export default function OwnerDashboardClient({
-  stats,
-  bookings,
+  stats: initialStats,
+  bookings: initialBookings,
   shop,
 }: {
   stats: { total: number; pending: number; completed: number }
   bookings: Booking[]
   shop: Shop | null
 }) {
+  const [bookings, setBookings] = useState(initialBookings)
+
+  const pending = bookings.filter(b => b.status === 'PENDING').length
+  const completed = bookings.filter(b => b.status === 'COMPLETED').length
+  const stats = { total: bookings.length, pending, completed }
+
+  const handleStatusChange = (bookingId: string, newStatus: string) => {
+    setBookings(prev =>
+      prev.map(b => (b._id === bookingId ? { ...b, status: newStatus } : b))
+    )
+  }
+
   const statCards: Stat[] = [
     { label: 'Total Requests', value: stats.total, icon: LayoutDashboard, color: 'text-foreground', iconColor: '' },
     { label: 'Pending Action', value: stats.pending, icon: Calendar, color: 'text-yellow-500', iconColor: 'text-yellow-500' },
@@ -75,7 +90,11 @@ export default function OwnerDashboardClient({
           ) : (
             <div className="space-y-4">
               {bookings.map((booking) => (
-                <BookingItem key={booking._id} booking={booking} />
+                <BookingItem
+                  key={booking._id}
+                  booking={booking}
+                  onStatusChange={handleStatusChange}
+                />
               ))}
             </div>
           )}
@@ -119,7 +138,7 @@ export default function OwnerDashboardClient({
   )
 }
 
-function BookingItem({ booking }: { booking: Booking }) {
+function BookingItem({ booking, onStatusChange }: { booking: Booking; onStatusChange: (id: string, s: string) => void }) {
   return (
     <div className="bg-dark-surface border border-white/10 p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 hover:border-primary/30 transition-colors">
       <div className="space-y-2">
@@ -139,37 +158,45 @@ function BookingItem({ booking }: { booking: Booking }) {
         <div className="flex items-center gap-4 text-sm text-gray-400">
           <div className="flex items-center gap-1">
             <Calendar size={14} />
-            {new Date(booking.dateTime).toLocaleDateString()}
+            {formatDate(booking.dateTime)}
           </div>
           <div className="flex items-center gap-1">
             <Clock size={14} />
-            {new Date(booking.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {formatTime(booking.dateTime)}
           </div>
+          {booking.serviceId && (
+            <span className="text-primary font-medium truncate max-w-[160px]">
+              {booking.serviceId.name}
+            </span>
+          )}
         </div>
       </div>
-      <BookingActions bookingId={booking._id} status={booking.status} />
+      <BookingActions bookingId={booking._id} status={booking.status} onStatusChange={onStatusChange} />
     </div>
   )
 }
 
-function BookingActions({ bookingId, status }: { bookingId: string; status: string }) {
+function BookingActions({ bookingId, status, onStatusChange }: { bookingId: string; status: string; onStatusChange: (id: string, s: string) => void }) {
   const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
 
   const updateStatus = async (newStatus: string, endpoint: string) => {
     setLoading(true)
     try {
       const res = await fetch(endpoint, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': '1' },
         body: JSON.stringify({ bookingId, status: newStatus })
       })
       if (res.ok) {
-        window.location.reload()
+        onStatusChange(bookingId, newStatus)
+        const label = newStatus.charAt(0) + newStatus.slice(1).toLowerCase()
+        toast(`Booking ${label.toLowerCase()} successfully`, 'success')
       } else {
-        alert("Failed to update status")
+        toast('Failed to update status', 'error')
       }
     } catch {
-      alert("An error occurred")
+      toast('An error occurred', 'error')
     } finally {
       setLoading(false)
     }
@@ -185,7 +212,7 @@ function BookingActions({ bookingId, status }: { bookingId: string; status: stri
           size="sm"
           className="px-4"
         >
-          Accept
+          {loading ? 'Processing...' : 'Accept'}
         </Button>
         <Button
           onClick={() => updateStatus('REJECTED', '/api/bookings/update')}
@@ -194,7 +221,7 @@ function BookingActions({ bookingId, status }: { bookingId: string; status: stri
           size="sm"
           className="px-4"
         >
-          Reject
+          {loading ? 'Processing...' : 'Reject'}
         </Button>
       </div>
     )
@@ -210,7 +237,7 @@ function BookingActions({ bookingId, status }: { bookingId: string; status: stri
           size="sm"
           className="px-4"
         >
-          Complete
+          {loading ? 'Processing...' : 'Complete'}
         </Button>
         <Button
           onClick={() => updateStatus('NO_SHOW', '/api/bookings/complete')}
@@ -219,7 +246,7 @@ function BookingActions({ bookingId, status }: { bookingId: string; status: stri
           size="sm"
           className="px-4"
         >
-          No Show
+          {loading ? 'Processing...' : 'No Show'}
         </Button>
       </div>
     )

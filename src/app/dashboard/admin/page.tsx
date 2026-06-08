@@ -29,7 +29,7 @@ export default function AdminOverview() {
     fetch('/api/admin/stats')
       .then(r => r.json())
       .then(data => setStats(data))
-      .finally(() => setLoading(false))
+      .catch(() => setLoading(false))
   }, [])
 
   const renderStatValue = <K extends keyof Stats>(key: K): number | string => {

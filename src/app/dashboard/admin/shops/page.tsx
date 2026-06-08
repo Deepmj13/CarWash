@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Table from '@/components/ui/Table'
 import { Button } from '@/components/ui/Button'
 import { Star, Edit2, X, Save } from 'lucide-react'
+import { formatDate } from '@/lib/utils'
 
 interface Shop {
   _id: string
@@ -40,6 +41,7 @@ export default function AdminShops() {
     fetch('/api/admin/shops')
       .then(r => r.json())
       .then(data => { setShops(data); setLoading(false) })
+      .catch(() => setLoading(false))
   }
 
   useEffect(() => { fetchShops() }, [])
@@ -66,7 +68,7 @@ export default function AdminShops() {
     try {
       const res = await fetch('/api/admin/shops', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': '1' },
         body: JSON.stringify({ shopId: editingShop._id, ...editForm }),
       })
       if (res.ok) {
@@ -119,7 +121,7 @@ export default function AdminShops() {
       key: 'createdAt',
       label: 'Created',
       sortable: true,
-      render: (shop: Shop) => new Date(shop.createdAt).toLocaleDateString(),
+      render: (shop: Shop) => formatDate(shop.createdAt),
     },
     {
       key: '_id',

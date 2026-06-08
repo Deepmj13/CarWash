@@ -6,7 +6,7 @@ import { getAllReviews, deleteReview } from '@/services/admin.service'
 export async function GET() {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || (session.user as { role: string }).role !== 'ADMIN') {
+    if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 403 })
     }
 
@@ -21,7 +21,7 @@ export async function GET() {
 export async function DELETE(req: Request) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session || (session.user as { role: string }).role !== 'ADMIN') {
+    if (!session || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 403 })
     }
 

@@ -12,8 +12,8 @@ export async function GET(
       return NextResponse.json({ error: 'Shop not found' }, { status: 404 })
     }
     return NextResponse.json(shop)
-  } catch {
-    console.error('GET shop by id failed')
+  } catch (error) {
+    console.error('GET shop by id failed:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

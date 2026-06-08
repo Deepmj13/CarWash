@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Table from '@/components/ui/Table'
 import { Button } from '@/components/ui/Button'
 import { Trash2, Award, Plus } from 'lucide-react'
+import { formatDate } from '@/lib/utils'
 
 interface Badge {
   _id: string
@@ -35,18 +36,20 @@ export default function AdminBadges() {
     Promise.all([
       fetch('/api/admin/badges').then(r => r.json()),
       fetch('/api/admin/shops').then(r => r.json()),
-    ]).then(([badgesData, shopsData]) => {
-      setBadges(badgesData)
-      setShops(shopsData)
-      setLoading(false)
-    })
+    ])
+      .then(([badgesData, shopsData]) => {
+        setBadges(badgesData)
+        setShops(shopsData)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
   }, [])
 
   const awardBadge = async () => {
     if (!newShopId) return
     await fetch('/api/admin/badges', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': '1' },
       body: JSON.stringify({ shopId: newShopId, type: newType }),
     })
     setShowForm(false)
@@ -59,7 +62,7 @@ export default function AdminBadges() {
     if (!confirm('Remove this badge?')) return
     await fetch('/api/admin/badges', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': '1' },
       body: JSON.stringify({ badgeId }),
     })
     const res = await fetch('/api/admin/badges')
@@ -91,7 +94,7 @@ export default function AdminBadges() {
       key: 'awardedAt',
       label: 'Awarded',
       sortable: true,
-      render: (b: Badge) => new Date(b.awardedAt).toLocaleDateString(),
+      render: (b: Badge) => formatDate(b.awardedAt),
     },
     {
       key: '_id',

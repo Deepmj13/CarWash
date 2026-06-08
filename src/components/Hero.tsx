@@ -9,7 +9,7 @@ import { Car, Search } from 'lucide-react'
 
 export default function Hero() {
   const { data: session } = useSession()
-  const role = (session?.user as { role?: string })?.role
+  const role = session?.user?.role
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-dark-bg text-foreground px-4">
       {/* Background decorative elements */}

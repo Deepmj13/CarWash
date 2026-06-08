@@ -14,6 +14,7 @@ export interface IShop extends Document {
   rating: number;
   totalBookings: number;
   ownerId: mongoose.Types.ObjectId;
+  operatingHours?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,6 +30,7 @@ const ShopSchema = new Schema({
   rating: { type: Number, default: 0 },
   totalBookings: { type: Number, default: 0 },
   ownerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  operatingHours: { type: String },
 }, { timestamps: true });
 
 export { CURRENCIES }

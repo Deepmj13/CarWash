@@ -22,6 +22,13 @@ interface Shop {
   image: string
 }
 
+interface PaginatedResponse {
+  items: Shop[]
+  total: number
+  page: number
+  totalPages: number
+}
+
 const priceBuckets = [
   { value: '', label: 'All Prices' },
   { value: '0-20', label: 'Under $20' },
@@ -33,6 +40,9 @@ const ratingOptions = [0, 3, 3.5, 4, 4.5]
 
 export default function ShopsPage() {
   const [shops, setShops] = useState<Shop[]>([])
+  const [total, setTotal] = useState(0)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(0)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [priceBucket, setPriceBucket] = useState('')
@@ -43,10 +53,22 @@ export default function ShopsPage() {
     if (search) params.set('search', search)
     if (priceBucket) params.set('priceBucket', priceBucket)
     if (minRating) params.set('minRating', String(minRating))
+    if (page > 1) params.set('page', String(page))
 
     fetch(`/api/shops?${params.toString()}`)
       .then(r => r.json())
-      .then(data => { setShops(data); setLoading(false) })
+      .then((data: PaginatedResponse) => {
+        setShops(data.items)
+        setTotal(data.total)
+        setPage(data.page)
+        setTotalPages(data.totalPages)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [search, priceBucket, minRating, page])
+
+  useEffect(() => {
+    setPage(1)
   }, [search, priceBucket, minRating])
 
   return (
@@ -112,68 +134,94 @@ export default function ShopsPage() {
           <div className="text-center py-24 border border-white/10">
             <p className="text-gray-400 text-lg">No shops found matching your criteria</p>
             <button
-              onClick={() => { setSearch(''); setPriceBucket(''); setMinRating(0) }}
+              onClick={() => { setSearch(''); setPriceBucket(''); setMinRating(0); setPage(1) }}
               className="text-primary text-sm font-bold uppercase tracking-widest mt-4 hover:underline"
             >
               Clear filters
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {shops.map((shop, index) => (
-              <motion.div
-                key={shop.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="group relative bg-dark-surface border border-gray-800 overflow-hidden transition-all hover:border-primary/50"
-              >
-                <div className="aspect-[4/3] overflow-hidden relative">
-                  <Image
-                    src={shop.image || ''}
-                    alt={shop.name}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
-                  <div className="absolute top-4 left-4">
-                    <span className="px-3 py-1 bg-secondary text-dark-bg text-[10px] font-black uppercase tracking-widest">
-                      {shop.totalBookings > 200 ? 'Top Performer' : shop.rating > 4.8 ? 'Best Rated' : 'Verified'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-6">
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-xl font-bold uppercase tracking-tight">{shop.name}</h3>
-                    <div className="flex items-center gap-1 text-secondary">
-                      <Star size={16} fill="currentColor" />
-                      <span className="font-bold">{shop.rating}</span>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {shops.map((shop, index) => (
+                <motion.div
+                  key={shop.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="group relative bg-dark-surface border border-gray-800 overflow-hidden transition-all hover:border-primary/50"
+                >
+                  <div className="aspect-[4/3] overflow-hidden relative">
+                    <Image
+                      src={shop.image || ''}
+                      alt={shop.name}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute top-4 left-4">
+                      <span className="px-3 py-1 bg-secondary text-dark-bg text-[10px] font-black uppercase tracking-widest">
+                        {shop.totalBookings > 200 ? 'Top Performer' : shop.rating > 4.8 ? 'Best Rated' : 'Verified'}
+                      </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 text-gray-400 text-sm mb-6">
-                    <div className="flex items-center gap-1">
-                      <MapPin size={14} />
-                      {shop.address}
+                  <div className="p-6">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-xl font-bold uppercase tracking-tight">{shop.name}</h3>
+                      <div className="flex items-center gap-1 text-secondary">
+                        <Star size={16} fill="currentColor" />
+                        <span className="font-bold">{shop.rating}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <CheckCircle2 size={14} />
-                      {shop.priceRange || '—'}
-                    </div>
-                    <div className="ml-auto text-xs">
-                      {shop.totalBookings} Bookings
-                    </div>
-                  </div>
 
-                  <Link href={`/shop/${shop.id}`}>
-                    <Button variant="primary" size="md" className="w-full">
-                      Book Now
-                    </Button>
-                  </Link>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+                    <div className="flex items-center gap-4 text-gray-400 text-sm mb-6">
+                      <div className="flex items-center gap-1">
+                        <MapPin size={14} />
+                        {shop.address}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <CheckCircle2 size={14} />
+                        {shop.priceRange || '—'}
+                      </div>
+                      <div className="ml-auto text-xs">
+                        {shop.totalBookings} Bookings
+                      </div>
+                    </div>
+
+                    <Link href={`/shop/${shop.id}`}>
+                      <Button variant="primary" size="md" className="w-full">
+                        Book Now
+                      </Button>
+                    </Link>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-4 mt-12">
+                <Button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  variant="outline"
+                  size="sm"
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-gray-400 font-medium">
+                  Page {page} of {totalPages} ({total} shops)
+                </span>
+                <Button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  variant="outline"
+                  size="sm"
+                >
+                  Next
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

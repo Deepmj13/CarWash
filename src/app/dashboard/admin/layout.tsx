@@ -96,7 +96,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  if ((session?.user as { role?: string })?.role !== 'ADMIN') {
+  if (session?.user?.role !== 'ADMIN') {
     return (
       <div className="min-h-screen bg-dark-bg flex items-center justify-center">
         <div className="text-center p-8 border border-white/10">

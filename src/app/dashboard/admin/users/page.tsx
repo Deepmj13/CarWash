@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Table from '@/components/ui/Table'
 import { Button } from '@/components/ui/Button'
 import { Shield, ShieldOff, Check, X } from 'lucide-react'
+import { formatDate } from '@/lib/utils'
 
 interface User {
   _id: string
@@ -24,6 +25,7 @@ export default function AdminUsers() {
     fetch('/api/admin/users')
       .then(r => r.json())
       .then(data => { setUsers(data); setLoading(false) })
+      .catch(() => setLoading(false))
   }
 
   useEffect(() => { fetchUsers() }, [])
@@ -31,7 +33,7 @@ export default function AdminUsers() {
   const toggleBlock = async (userId: string) => {
     await fetch('/api/admin/users', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': '1' },
       body: JSON.stringify({ userId, action: 'toggleBlock' }),
     })
     fetchUsers()
@@ -40,7 +42,7 @@ export default function AdminUsers() {
   const changeRole = async (userId: string, role: string) => {
     await fetch('/api/admin/users', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': '1' },
       body: JSON.stringify({ userId, action: 'changeRole', role }),
     })
     fetchUsers()
@@ -60,7 +62,7 @@ export default function AdminUsers() {
     if (!emailDraft) return
     await fetch('/api/admin/users', {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': '1' },
       body: JSON.stringify({ userId, action: 'updateUser', email: emailDraft }),
     })
     cancelEmailEdit()
@@ -140,7 +142,7 @@ export default function AdminUsers() {
       key: 'createdAt',
       label: 'Joined',
       sortable: true,
-      render: (user: User) => new Date(user.createdAt).toLocaleDateString(),
+      render: (user: User) => formatDate(user.createdAt),
     },
     {
       key: '_id',

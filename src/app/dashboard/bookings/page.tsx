@@ -3,8 +3,9 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 import { redirect } from 'next/navigation'
 import { getUserBookings } from '@/services/booking.service'
 import { Button } from '@/components/ui/Button'
-import { Calendar, Clock, CheckCircle2, Timer, XCircle } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { Calendar } from 'lucide-react'
+import Link from 'next/link'
+import BookingCardWithReview from '@/components/BookingCardWithReview'
 
 export default async function BookingsPage() {
   const session = await getServerSession(authOptions)
@@ -13,7 +14,7 @@ export default async function BookingsPage() {
     redirect('/login')
   }
 
-  const bookings = await getUserBookings((session.user as any).id)
+  const bookings = await getUserBookings(session.user.id)
 
   return (
     <div className="min-h-screen bg-dark-bg text-foreground pt-24 pb-12 px-4">
@@ -25,9 +26,11 @@ export default async function BookingsPage() {
             </h1>
             <p className="text-gray-400">Track your upcoming car wash sessions</p>
           </div>
-          <Button variant="outline" size="md">
-            Find New Shop
-          </Button>
+          <Link href="/shops">
+            <Button variant="outline" size="md">
+              Find New Shop
+            </Button>
+          </Link>
         </div>
 
         {bookings.length === 0 ? (
@@ -38,55 +41,7 @@ export default async function BookingsPage() {
         ) : (
           <div className="space-y-4">
             {bookings.map((booking: any) => (
-              <motion.div 
-                key={booking._id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="bg-dark-surface border border-white/10 p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
-              >
-                <div className="space-y-2">
-                  <h3 className="text-xl font-bold uppercase tracking-tight">
-                    {booking.shop?.name}
-                  </h3>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-gray-400">
-                    <div className="flex items-center gap-1">
-                      <Calendar size={14} />
-                      {new Date(booking.dateTime).toLocaleDateString()}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock size={14} />
-                      {new Date(booking.dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  {booking.status === 'PENDING' && (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 text-xs font-black uppercase italic">
-                      <Timer size={14} />
-                      Pending
-                    </div>
-                  )}
-                  {booking.status === 'ACCEPTED' && (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-primary/10 text-primary border border-primary/20 text-xs font-black uppercase italic">
-                      <CheckCircle2 size={14} />
-                      Accepted
-                    </div>
-                  )}
-                  {booking.status === 'REJECTED' && (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-accent/10 text-accent border border-accent/20 text-xs font-black uppercase italic">
-                      <XCircle size={14} />
-                      Rejected
-                    </div>
-                  )}
-                  {booking.status === 'COMPLETED' && (
-                    <div className="flex items-center gap-2 px-3 py-1 bg-secondary/10 text-secondary border border-secondary/20 text-xs font-black uppercase italic">
-                      <CheckCircle2 size={14} />
-                      Completed
-                    </div>
-                  )}
-                </div>
-              </motion.div>
+              <BookingCardWithReview key={booking._id} booking={booking} />
             ))}
           </div>
         )}

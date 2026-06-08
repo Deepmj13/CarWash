@@ -31,7 +31,8 @@ export async function getOwnerBookings(ownerId: string) {
 
     // Find all bookings for those shops
     return await Booking.find({ shopId: { $in: shopIds } })
-      .populate('user', 'email')
+      .populate('userId', 'email')
+      .populate('serviceId', 'name price duration')
       .sort({ createdAt: -1 })
       .lean()
   } catch (error: any) {
@@ -74,6 +75,18 @@ export async function updateShopDetails(shopId: string, updates: Partial<IShop>)
     )
   } catch (error: any) {
     throw new Error(error.message || 'Failed to update shop details')
+  }
+}
+
+export async function getOwnerServices(ownerId: string) {
+  try {
+    await connectDB()
+    const shop = await Shop.findOne({ ownerId }).select('_id')
+    if (!shop) return []
+    const Service = (await import('@/models/Service')).default
+    return await Service.find({ shopId: shop._id }).sort({ price: 1 }).lean()
+  } catch (error: any) {
+    throw new Error(error.message || 'Failed to fetch services')
   }
 }
 

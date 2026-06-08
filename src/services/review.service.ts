@@ -53,3 +53,16 @@ export async function createReview(data: {
     throw new Error(error.message || 'Failed to create review')
   }
 }
+
+export async function getShopReviews(shopId: string) {
+  try {
+    await connectDB()
+    return await Review.find({ shopId })
+      .populate('userId', 'email')
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean()
+  } catch (error: any) {
+    throw new Error(error.message || 'Failed to fetch reviews')
+  }
+}

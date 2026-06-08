@@ -9,6 +9,14 @@ export function serialize<T>(data: T): T {
   return JSON.parse(JSON.stringify(data))
 }
 
+export function formatDate(date: string | Date): string {
+  return new Date(date).toLocaleDateString('en-US')
+}
+
+export function formatTime(date: string | Date): string {
+  return new Date(date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+}
+
 const currencySymbols: Record<string, string> = {
   USD: '$', EUR: '€', GBP: '£', INR: '₹', CAD: 'CA$', AUD: 'A$',
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Table from '@/components/ui/Table'
 import { Button } from '@/components/ui/Button'
 import { Trash2, Star } from 'lucide-react'
+import { formatDate } from '@/lib/utils'
 
 interface Review {
   _id: string
@@ -22,13 +23,14 @@ export default function AdminReviews() {
     fetch('/api/admin/reviews')
       .then(r => r.json())
       .then(data => { setReviews(data); setLoading(false) })
+      .catch(() => setLoading(false))
   }, [])
 
   const handleDelete = async (reviewId: string) => {
     if (!confirm('Delete this review?')) return
     await fetch('/api/admin/reviews', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': '1' },
       body: JSON.stringify({ reviewId }),
     })
     const res = await fetch('/api/admin/reviews')
@@ -76,7 +78,7 @@ export default function AdminReviews() {
       key: 'createdAt',
       label: 'Date',
       sortable: true,
-      render: (r: Review) => new Date(r.createdAt).toLocaleDateString(),
+      render: (r: Review) => formatDate(r.createdAt),
     },
     {
       key: '_id',

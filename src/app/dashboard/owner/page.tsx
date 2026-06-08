@@ -10,11 +10,11 @@ import OwnerDashboardClient from '@/components/OwnerDashboardClient'
 export default async function OwnerDashboard() {
   const session = await getServerSession(authOptions)
   
-  if (!session || (session.user as { role: string }).role !== 'OWNER') {
+  if (!session || session.user.role !== 'OWNER') {
     redirect('/login')
   }
 
-  const ownerId = (session.user as { id: string }).id
+  const ownerId = session.user.id
   const bookings = await getOwnerBookings(ownerId)
   const shop = await getOwnerShop(ownerId)
 

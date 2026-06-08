@@ -7,15 +7,16 @@ import { Button } from '@/components/ui/Button'
 import { serialize } from '@/lib/utils'
 import { ArrowLeft } from 'lucide-react'
 import ShopSettingsForm from '@/components/ShopSettingsForm'
+import ServiceManager from '@/components/ServiceManager'
 
 export default async function OwnerSettingsPage() {
   const session = await getServerSession(authOptions)
   
-  if (!session || (session.user as { role: string }).role !== 'OWNER') {
+  if (!session || session.user.role !== 'OWNER') {
     redirect('/login')
   }
 
-  const ownerId = (session.user as { id: string }).id
+  const ownerId = session.user.id
   const shop = await getOwnerShop(ownerId)
 
   return (
@@ -32,8 +33,12 @@ export default async function OwnerSettingsPage() {
           </h1>
         </div>
 
-        <div className="bg-dark-surface border border-white/10 p-8">
-          <ShopSettingsForm shop={serialize(shop)} />
+        <div className="space-y-10">
+          <div className="bg-dark-surface border border-white/10 p-8">
+            <ShopSettingsForm shop={serialize(shop)} />
+          </div>
+
+          {shop && <ServiceManager />}
         </div>
       </div>
     </div>

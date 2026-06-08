@@ -14,7 +14,7 @@ export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false)
 
   if (pathname.startsWith('/dashboard/admin')) return null
-  const role = (session?.user as { role?: string })?.role
+  const role = session?.user?.role
 
   return (
     <nav className="fixed top-0 left-0 w-full z-50 px-4 py-4">
